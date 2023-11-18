@@ -1,0 +1,47 @@
+local x = true
+
+while x do
+    local throttleDuration = 0.1
+    local playersFolder = workspace:WaitForChild("Game"):WaitForChild("Players")
+
+    local startTime = tick()
+
+    local player = game.Players.LocalPlayer
+    local playerCharacter = player.Character
+
+    if playerCharacter and playerCharacter.PrimaryPart then
+        local playerPosition = playerCharacter.PrimaryPart.Position
+        local closestHumanoid
+        local closestDistance = math.huge
+
+        for _, child in pairs(playersFolder:GetChildren()) do
+            if child:IsA("Model") and child:FindFirstChild("Humanoid") then
+                local humanoid = child.Humanoid
+                if humanoid.Parent and humanoid.Parent.PrimaryPart then
+                    local distance = (humanoid.Parent.PrimaryPart.Position - playerPosition).Magnitude
+
+                    if child ~= playerCharacter and distance < closestDistance then
+                        closestHumanoid = humanoid
+                        closestDistance = distance
+                    end
+                end
+            end
+        end
+
+        if closestHumanoid then
+            local args = {
+                [1] = "Light Punch",
+                [2] = math.random(5),
+                [3] = closestHumanoid
+            }
+
+            game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("ClientToServer"):WaitForChild("BasicCombat"):FireServer(unpack(args))
+        end
+    end
+
+    local elapsedTime = tick() - startTime
+
+    if elapsedTime < throttleDuration then
+        wait(throttleDuration - elapsedTime)
+    end
+end
