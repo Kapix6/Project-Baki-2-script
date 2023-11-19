@@ -1,0 +1,5 @@
+local args = {
+    [1] = "Yujiro"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("ClientToServer"):WaitForChild("ShadowBoxing"):InvokeServer(unpack(args))
