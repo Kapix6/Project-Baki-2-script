@@ -1,37 +1,45 @@
-local x = true
+local game = game
+local workspace = workspace
+local wait = wait
+local tick = tick
+local math = math
+local table = table
 
-while x do
-    local throttleDuration = 0.1
-    local playersFolder = workspace:WaitForChild("Game"):WaitForChild("Players")
+local throttleDuration = 0.1
+local playersFolder = workspace:WaitForChild("Game"):WaitForChild("Players")
+local detectionRadius = 25 -- Set this to the maximum distance at which you want to detect NPCs
 
+local player = game.Players.LocalPlayer
+local playerCharacter = player.Character
+
+while true do
     local startTime = tick()
-
-    local player = game.Players.LocalPlayer
-    local playerCharacter = player.Character
 
     if playerCharacter and playerCharacter.PrimaryPart then
         local playerPosition = playerCharacter.PrimaryPart.Position
         local closestHumanoid
-        local closestDistance = math.huge
+        local closestDistanceSquared = math.huge -- Compare the square of the distances
 
         for _, child in pairs(playersFolder:GetChildren()) do
             if child:IsA("Model") and child:FindFirstChild("Humanoid") then
                 local humanoid = child.Humanoid
                 if humanoid.Parent and humanoid.Parent.PrimaryPart then
-                    local distance = (humanoid.Parent.PrimaryPart.Position - playerPosition).Magnitude
+                    local distanceSquared = (humanoid.Parent.PrimaryPart.Position - playerPosition).Magnitude^2
 
-                    if child ~= playerCharacter and distance < closestDistance then
+                    if child ~= playerCharacter and distanceSquared < closestDistanceSquared then
                         closestHumanoid = humanoid
-                        closestDistance = distance
+                        closestDistanceSquared = distanceSquared
                     end
                 end
             end
         end
 
-        if closestHumanoid then
+        -- Only run the script if there is an NPC within the detection radius
+        if closestHumanoid and closestDistanceSquared <= detectionRadius^2 then
+            local punchType = math.random() < 0.1 and "Heavy Punch" or "Light Punch" -- 10% chance for Heavy Punch, 90% for Light Punch
             local args = {
-                [1] = "Light Punch",
-                [2] = math.random(5),
+                [1] = punchType,
+                [2] = math.random(4),
                 [3] = closestHumanoid
             }
 
@@ -43,5 +51,10 @@ while x do
 
     if elapsedTime < throttleDuration then
         wait(throttleDuration - elapsedTime)
+    end
+
+    -- Randomly pause the entire script for 1 second with a 10% chance
+    if math.random() < 0.01 then
+        wait(1)
     end
 end
