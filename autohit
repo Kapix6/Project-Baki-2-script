@@ -7,7 +7,7 @@ local table = table
 
 local throttleDuration = 0.1
 local playersFolder = workspace:WaitForChild("Game"):WaitForChild("Players")
-local detectionRadius = 25 -- Set this to the maximum distance at which you want to detect NPCs
+local detectionRadius = 22 -- Set this to the maximum distance at which you want to detect NPCs
 
 local player = game.Players.LocalPlayer
 local playerCharacter = player.Character
@@ -36,10 +36,10 @@ while true do
 
         -- Only run the script if there is an NPC within the detection radius
         if closestHumanoid and closestDistanceSquared <= detectionRadius^2 then
-            local punchType = math.random() < 0.1 and "Heavy Punch" or "Light Punch" -- 10% chance for Heavy Punch, 90% for Light Punch
+            local punchType = math.random() < 0.5 and "Heavy Punch" or "Light Punch" -- 5% chance for Heavy Punch, 90% for Light Punch
             local args = {
                 [1] = punchType,
-                [2] = math.random(4),
+                [2] = math.random(5),
                 [3] = closestHumanoid
             }
 
@@ -53,8 +53,8 @@ while true do
         wait(throttleDuration - elapsedTime)
     end
 
-    -- Randomly pause the entire script for 1 second with a 10% chance
-    if math.random() < 0.01 then
+    -- Randomly pause the entire script for 1 second with a 0% chance
+    if math.random() < 0.00 then
         wait(1)
     end
 end
