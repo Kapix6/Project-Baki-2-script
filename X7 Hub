@@ -1,0 +1,117 @@
+local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
+
+-- Create a window with config saving enabled
+local Window = OrionLib:MakeWindow({
+    Name = "NPC Detection",
+    SaveConfig = true,
+    ConfigFolder = "NPCToggleConfig"
+})
+
+-- Create a tab
+local Tab = Window:MakeTab({
+    Name = "Main",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+-- Define the blacklist table outside the callback function
+local blacklist = {"Player1", "Player2"}
+
+-- Create a variable to control the loop
+local isNPCToggleEnabled = false
+local characterHeight = 5 -- Default character height
+
+-- Add a toggle to the tab
+local NPCToggle = Tab:AddToggle({
+    Name = "NPCToggle",
+    Default = false,
+    Callback = function(ToggleValue)
+        print("NPC Toggle status:", ToggleValue)
+        isNPCToggleEnabled = ToggleValue
+    end
+})
+
+
+
+-- Add a textbox for entering usernames outside the toggle callback
+local BlacklistInput = Tab:AddTextbox({
+    Name = "Blacklist Input",
+    Default = "",
+    TextDisappear = true,
+    Callback = function(InputValue)
+        print("Entered username:", InputValue)
+
+        -- Add the entered username to the blacklist
+        table.insert(blacklist, InputValue)
+    end
+})
+
+-- Your original script logic goes here
+while true do
+    if isNPCToggleEnabled then
+        local startTime = tick()
+
+        local player = game.Players.LocalPlayer
+        local playerCharacter = player.Character
+
+        if playerCharacter and playerCharacter.PrimaryPart then
+            local playerPosition = playerCharacter.PrimaryPart.Position
+            local closestHumanoid
+            local closestDistanceSquared = math.huge
+
+            for _, child in pairs(workspace.Game.Players:GetChildren()) do
+                if child:IsA("Model") and child:FindFirstChild("Humanoid") then
+                    local humanoid = child.Humanoid
+                    if humanoid.Parent and humanoid.Parent.PrimaryPart and humanoid.Health > 0 then
+                        local playerName = humanoid.Parent.Name
+                        local isBlacklisted = false
+
+                        for _, blacklistedName in ipairs(blacklist) do
+                            if playerName == blacklistedName then
+                                isBlacklisted = true
+                                break
+                            end
+                        end
+
+                        if not isBlacklisted then
+                            local distanceSquared = (humanoid.Parent.PrimaryPart.Position - playerPosition).Magnitude^2
+
+                            if child ~= player.Character and distanceSquared < closestDistanceSquared then
+                                closestHumanoid = humanoid
+                                closestDistanceSquared = distanceSquared
+                            end
+                        end
+                    end
+                end
+            end
+
+            -- Only run the script if there is an NPC within the detection radius
+            if closestHumanoid and closestDistanceSquared <= 22^2 then
+                -- Set the player's position above the NPC's position with adjusted height
+                playerCharacter:SetPrimaryPartCFrame(CFrame.new(Vector3.new(closestHumanoid.Parent.PrimaryPart.Position.X, closestHumanoid.Parent.PrimaryPart.Position.Y + characterHeight, closestHumanoid.Parent.PrimaryPart.Position.Z)))
+
+                local punchType = math.random() < 0.1 and "Heavy Punch" or "Light Punch"
+                local args = {
+                    [1] = punchType,
+                    [2] = math.random(5),
+                    [3] = closestHumanoid
+                }
+
+                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("ClientToServer"):WaitForChild("BasicCombat"):FireServer(unpack(args))
+            end
+        end
+
+        local elapsedTime = tick() - startTime
+
+        if elapsedTime < 0.1 then
+            wait(0.1 - elapsedTime)
+        end
+
+        -- Randomly pause the entire script for 1 second with a 0% chance
+        if math.random() < 0.00 then
+            wait(1)
+        end
+    else
+        wait(1) -- If the script is disabled, wait for 1 second before checking again
+    end
+end
