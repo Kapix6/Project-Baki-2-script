@@ -5,7 +5,7 @@ local userInputService = game:GetService("UserInputService")
 local player = PlayersService.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local isTeleportingEnabled = false 
-local floatHeight = 35
+local floatHeight = 15
 
 -- Function to create or find existing BodyPosition for floating
 function setupBodyPosition()
