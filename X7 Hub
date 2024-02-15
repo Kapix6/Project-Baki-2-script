@@ -87,9 +87,7 @@ while true do
 
             -- Only run the script if there is an NPC within the detection radius
             if closestHumanoid and closestDistanceSquared <= 22^2 then
-                -- Set the player's position above the NPC's position with adjusted height
-                playerCharacter:SetPrimaryPartCFrame(CFrame.new(Vector3.new(closestHumanoid.Parent.PrimaryPart.Position.X, closestHumanoid.Parent.PrimaryPart.Position.Y + characterHeight, closestHumanoid.Parent.PrimaryPart.Position.Z)))
-
+            
                 local punchType = math.random() < 0.1 and "Heavy Punch" or "Light Punch"
                 local args = {
                     [1] = punchType,
