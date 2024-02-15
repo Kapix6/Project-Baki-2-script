@@ -6,48 +6,63 @@ local RunService = game:GetService("RunService")
 local player = PlayersService.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local isTeleportingEnabled = false 
-local floatHeight = 15
-local floatSpeed = 0.8 
+local floatHeight = 13 
+local detectionRange = 30 -- Maximum distance to detect NPCs (adjust this!)
+
+local targetNPC = nil 
 
 function findAndFloatAboveClosestNPC()
-    local closestNPC = nil
-    local closestDistance = nil 
+   local closestNPC = nil
+   local closestDistance = nil 
 
-    for _, npc in pairs(npcFolder:GetChildren()) do
-        if npc ~= character then 
-            local npcRootPart = npc:FindFirstChild("HumanoidRootPart") 
-            local humanoid = npc:FindFirstChild("Humanoid")
+   for _, npc in pairs(npcFolder:GetChildren()) do
+       if npc ~= character then 
+           local npcRootPart = npc:FindFirstChild("HumanoidRootPart") 
+           local humanoid = npc:FindFirstChild("Humanoid")
 
-            if npcRootPart and humanoid and humanoid.Health > 0 then -- Check if NPC is alive
-                local distance = (character.HumanoidRootPart.Position - npcRootPart.Position).Magnitude
+           if npcRootPart and humanoid and humanoid.Health > 0 then -- Check if NPC is alive
+               local distance = (character.HumanoidRootPart.Position - npcRootPart.Position).Magnitude
 
-                if closestDistance == nil or distance < closestDistance then
-                    closestNPC = npc
-                    closestDistance = distance
-                end
-            end
+                if distance <= detectionRange then -- Detection Range Check!
+                   if closestDistance == nil or distance < closestDistance then
+                       closestNPC = npc
+                       closestDistance = distance
+                   end
+                end 
+           end
+       end
+   end
+
+   if closestNPC then
+       print("Closest NPC:", closestNPC.Name)
+       targetNPC = closestNPC 
+       smoothlyMoveToTarget() 
+   else
+       print("No NPCs found within range")
+   end
+end
+
+function smoothlyMoveToTarget() 
+    while isTeleportingEnabled and character and character.HumanoidRootPart and targetNPC do 
+        local targetNPCRootPart = targetNPC:FindFirstChild("HumanoidRootPart")
+        local humanoid = targetNPC:FindFirstChild("Humanoid")
+
+        if targetNPCRootPart and humanoid and humanoid.Health > 0 then 
+            local targetPosition = targetNPCRootPart.Position + Vector3.new(0, floatHeight, 0) 
+            local newCFrame = CFrame.lookAt(targetPosition, targetNPCRootPart.Position) 
+            character:PivotTo(newCFrame) 
+        else
+            -- NPC is dead or missing parts
+            print("NPC died or is invalid. Searching for a new target...")
+            targetNPC = nil -- Clear the current target
+            findAndFloatAboveClosestNPC() -- Find a new one
+            break -- Exit the smoothlyMoveToTarget loop temporarily
         end
-    end
 
-    if closestNPC then
-        print("Closest NPC:", closestNPC.Name)
-        local npcRootPart = closestNPC:FindFirstChild("HumanoidRootPart")
-        if npcRootPart then
-            local targetCFrame = npcRootPart.CFrame * CFrame.new(0, floatHeight, 0) 
-            smoothlyMoveToTarget(targetCFrame) 
-        end
-    else
-        print("No NPCs found in the folder")
+        RunService.Heartbeat:Wait() 
     end
 end
 
-function smoothlyMoveToTarget(targetCFrame)
-    while isTeleportingEnabled and character and character.HumanoidRootPart do
-        local currentCFrame = character.HumanoidRootPart.CFrame
-        character:PivotTo(currentCFrame:Lerp(targetCFrame, floatSpeed))
-        RunService.Heartbeat:Wait()
-    end
-end
 
 function toggleTeleport()
     isTeleportingEnabled = not isTeleportingEnabled
