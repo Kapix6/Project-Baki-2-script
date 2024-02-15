@@ -1,11 +1,13 @@
 local PlayersService = game:GetService("Players")
 local npcFolder = workspace.Game.Players 
 local userInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService") 
 
 local player = PlayersService.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local isTeleportingEnabled = false 
-local floatHeight = 15 
+local floatHeight = 15
+local floatSpeed = 0.8 
 
 function findAndFloatAboveClosestNPC()
     local closestNPC = nil
@@ -32,10 +34,18 @@ function findAndFloatAboveClosestNPC()
         local npcRootPart = closestNPC:FindFirstChild("HumanoidRootPart")
         if npcRootPart then
             local targetCFrame = npcRootPart.CFrame * CFrame.new(0, floatHeight, 0) 
-            character:PivotTo(targetCFrame)
+            smoothlyMoveToTarget(targetCFrame) 
         end
     else
         print("No NPCs found in the folder")
+    end
+end
+
+function smoothlyMoveToTarget(targetCFrame)
+    while isTeleportingEnabled and character and character.HumanoidRootPart do
+        local currentCFrame = character.HumanoidRootPart.CFrame
+        character:PivotTo(currentCFrame:Lerp(targetCFrame, floatSpeed))
+        RunService.Heartbeat:Wait()
     end
 end
 
