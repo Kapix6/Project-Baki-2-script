@@ -6,8 +6,8 @@ local RunService = game:GetService("RunService")
 local player = PlayersService.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local isTeleportingEnabled = false 
-local floatHeight = 13 
-local detectionRange = 30 -- Maximum distance to detect NPCs (adjust this!)
+local floatHeight = 10 
+local detectionRange = 200 -- Maximum distance to detect NPCs (adjust this!)
 
 local targetNPC = nil 
 
