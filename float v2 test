@@ -12,91 +12,90 @@ local detectionRange = 200 -- Maximum distance to detect NPCs (adjust this!)
 local targetNPC = nil 
 
 function findAndFloatAboveClosestNPC()
-  local closestNPC = nil
-  local closestDistance = nil 
+   local closestNPC = nil
+   local closestDistance = nil 
 
-  for _, npc in pairs(npcFolder:GetChildren()) do
-      if npc ~= character then 
-          local npcRootPart = npc:FindFirstChild("HumanoidRootPart") 
-          local humanoid = npc:FindFirstChild("Humanoid")
+   for _, npc in pairs(npcFolder:GetChildren()) do
+       if npc ~= character then 
+           local npcRootPart = npc:FindFirstChild("HumanoidRootPart") 
+           local humanoid = npc:FindFirstChild("Humanoid")
 
-          if npcRootPart and humanoid and humanoid.Health > 0 then -- Check if NPC is alive
-              local distance = (character.HumanoidRootPart.Position - npcRootPart.Position).Magnitude
+           if npcRootPart and humanoid and humanoid.Health > 0 then -- Check if NPC is alive
+               local distance = (character.HumanoidRootPart.Position - npcRootPart.Position).Magnitude
 
-               if distance <= detectionRange then -- Detection Range Check!
-                  if closestDistance == nil or distance < closestDistance then
-                      closestNPC = npc
-                      closestDistance = distance
-                  end
-               end 
-          end
-      end
-  end
+                if distance <= detectionRange then -- Detection Range Check!
+                   if closestDistance == nil or distance < closestDistance then
+                       closestNPC = npc
+                       closestDistance = distance
+                   end
+                end 
+           end
+       end
+   end
 
-  if closestNPC then
-      print("Closest NPC:", closestNPC.Name)
-      targetNPC = closestNPC 
-      smoothlyMoveToTarget() 
-  else
-      print("No NPCs found within range")
-  end
+   if closestNPC then
+       print("Closest NPC:", closestNPC.Name)
+       targetNPC = closestNPC 
+       smoothlyMoveToTarget() 
+   else
+       print("No NPCs found within range")
+   end
 end
 
 function smoothlyMoveToTarget() 
-   while isTeleportingEnabled and character and character.HumanoidRootPart and targetNPC do 
-       local targetNPCRootPart = targetNPC:FindFirstChild("HumanoidRootPart")
-       local humanoid = targetNPC:FindFirstChild("Humanoid")
+    while isTeleportingEnabled and character and character.HumanoidRootPart and targetNPC do 
+        local targetNPCRootPart = targetNPC:FindFirstChild("HumanoidRootPart")
+        local humanoid = targetNPC:FindFirstChild("Humanoid")
 
-       if targetNPCRootPart and humanoid and humanoid.Health > 0 then 
-            local offset = Vector3.new(-floatHeight, 0, 0) -- Offset behind the NPC
-            local targetPosition = targetNPCRootPart.Position + offset 
-
-            local newCFrame = CFrame.lookAt(targetPosition, targetNPCRootPart.Position) 
+        if targetNPCRootPart and humanoid and humanoid.Health > 0 then 
+            -- Calculate position behind the NPC
+            local direction = (character.HumanoidRootPart.Position - targetNPCRootPart.Position).unit
+            local behindPosition = targetNPCRootPart.Position - direction * 5 -- Adjust the distance behind the NPC as needed
+            local targetPosition = behindPosition + Vector3.new(0, floatHeight, 0) 
+            local newCFrame = CFrame.lookAt(targetPosition, behindPosition) 
             character:PivotTo(newCFrame) 
-       else
-           -- NPC is dead or missing parts
-           print("NPC died or is invalid. Searching for a new target...")
-           targetNPC = nil -- Clear the current target
-           findAndFloatAboveClosestNPC() -- Find a new one
-           break -- Exit the smoothlyMoveToTarget loop temporarily
-       end
+        else
+            -- NPC is dead or missing parts
+            print("NPC died or is invalid. Searching for a new target...")
+            targetNPC = nil -- Clear the current target
+            findAndFloatBehindClosestNPC() -- Find a new one
+            break -- Exit the smoothlyMoveToTarget loop temporarily
+        end
 
-       RunService.Heartbeat:Wait() 
-   end
+        RunService.Heartbeat:Wait() 
+    end
 end
-
 
 function toggleTeleport()
-   isTeleportingEnabled = not isTeleportingEnabled
+    isTeleportingEnabled = not isTeleportingEnabled
 
-   if isTeleportingEnabled then
-       print("Float behind closest NPC: Enabled")
-       teleportLoop() 
-   else
-       print("Float behind closest NPC: Disabled")
-   end
+    if isTeleportingEnabled then
+        print("Float above closest NPC: Enabled")
+        teleportLoop() 
+    else
+        print("Float above closest NPC: Disabled")
+    end
 end
 
-function teleportLoop()  
-   while isTeleportingEnabled do
-       findAndFloatAboveClosestNPC() 
-       wait(0.5) 
-   end
+function teleportLoop()   
+    while isTeleportingEnabled do
+        findAndFloatAboveClosestNPC() 
+        wait(0.5) 
+    end
 end
 
 userInputService.InputBegan:Connect(function(input, gameProcessed)
     if isTeleportingEnabled then 
         if input.KeyCode == Enum.KeyCode.Up then
-            followDistance = followDistance + 1
-            print("Follow distance increased to:", followDistance)
+            floatHeight = floatHeight + 1
+            print("Float height increased to:", floatHeight)
         elseif input.KeyCode == Enum.KeyCode.Down then
-            followDistance = followDistance - 1
-            print("Follow distance decreased to:", followDistance)
+            floatHeight = floatHeight - 1
+            print("Float height decreased to:", floatHeight)
         end
     end
 
-    if not gameProcessed and input.KeyCode == Enum.KeyCode.Y then -- Changed from T to Y
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.T then 
         toggleTeleport()
     end 
 end)
-
